@@ -6,6 +6,7 @@ on:
         - 'src/**'
         - 'include/**'
         - 'test/**'
+        - '.github/workflows/Generate Coverage.yml'  # Déclenchement si le workflow change
 
 jobs:
   coverage:
@@ -25,10 +26,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Install Specific Compiler
-        run: sudo apt-get install -y gcc-11 g++-11
-
-      - name: Install lcov
-        run: sudo apt-get update && sudo apt-get install -y lcov
+        run: sudo apt-get install -y gcc-11 g++-11 lcov
 
       - name: Set Compiler Path
         run: |
@@ -41,29 +39,28 @@ jobs:
 
       - name: Capture Coverage Data
         run: |
-          # # Capturer la couverture uniquement pour linearAlgebra
-          # lcov --directory . --capture --output-file coverage.info
-          # # Inclure uniquement les répertoires souhaités
-          # lcov --extract coverage.info "*/include/*" --output-file coverage.info
-          # # Liste les informations de couverture
-          # lcov --list coverage.info
+          # Capturer toute la couverture
           lcov --capture --directory . --output-file coverage.info
+          # Retirer les fichiers non pertinents (tests, PlatformIO, bibliothèques)
           lcov --remove coverage.info 'test/*' '*/.pio/*' --output-file coverage_filtered.info
-          lcov --list coverage_filtered.info
-          
+          # Ne garder que include/ et src/
+          lcov --extract coverage_filtered.info "*/include/*" "*/src/*" --output-file coverage_project.info
+          # Lister les informations de couverture finales
+          lcov --list coverage_project.info
+
       - name: Generate HTML Report
         run: |
           rm -rf docs/coverage_report
           mkdir -p docs/coverage_report
-          genhtml coverage.info --output-directory docs/coverage_report
+          genhtml coverage_project.info --output-directory docs/coverage_report
 
       - name: Commit Coverage Report
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'actions@github.com'
           git add docs/coverage_report/*
-          git commit -m "Update coverage report"
-          git pull
+          git commit -m "Update coverage report" || echo "No changes to commit"
+          git pull --rebase
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
