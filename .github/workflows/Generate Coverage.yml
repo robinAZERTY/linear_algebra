@@ -1,52 +1,54 @@
 name: Generate Test Coverage Report
 
 on:
-  push:
-    paths:
-      - 'src/**'
-      - 'include/**'
-      - 'test/**'
-      - '.github/workflows/Generate Coverage.yml'
-      - 'platformio.ini'
+    push:
+        paths:
+        - 'src/**'
+        - 'include/**'
+        - 'test/**'
+        - '.github/workflows/Generate Coverage.yml'  # Déclenchement si le workflow change
+        - 'platformio.ini'
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/pip
-            ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
-
+            path: |
+              ~/.cache/pip
+              ~/.platformio/.cache
+            key: ${{ runner.os }}-pio
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
+            python-version: '3.11'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
-      - name: Install Coverage Tools
-        run: sudo apt-get install -y lcov
+      - name: Install Specific Compiler
+        run: sudo apt-get install -y gcc-11 g++-11 lcov
+
+      - name: Set Compiler Path
+        run: |
+          export CC=/usr/bin/gcc-11
+          export CXX=/usr/bin/g++-11
 
       - name: Compile with Coverage
-        run: platformio test --environment native
+        run: |
+          platformio test --environment native
 
       - name: Capture Coverage Data
         run: |
           # Capture la couverture pour tous les fichiers compilés
-          lcov --capture --directory . --output-file coverage.info --rc branch_coverage=1 --rc function_coverage=1 --rc geninfo_unexecuted_blocks=1
+          lcov --capture --directory . --output-file coverage.info --rc lcov_branch_coverage=1 --rc lcov_function_coverage=1
           
           # Retirer les fichiers tests et PlatformIO
           lcov --remove coverage.info 'test/*' '*/.pio/*' --output-file coverage_filtered.info
           
-          # Inclure tous les fichiers src et include même non exécutés
+          # Forcer l'inclusion de tous les fichiers src et include (même non exécutés)
           lcov --extract coverage_filtered.info "*/include/*" "*/src/*" --output-file coverage_project.info
-          
-          # Lister la couverture finale
+          # Lister les informations de couverture finales
           lcov --list coverage_project.info
 
       - name: Generate HTML Report
@@ -60,8 +62,8 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'actions@github.com'
           git add docs/coverage_report/*
-          git commit -m "Update coverage report" || echo "No changes to commit"
-          git pull --rebase
+          git commit -m "Update coverage report"
+          git pull
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
