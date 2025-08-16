@@ -7,6 +7,7 @@ on:
         - 'include/**'
         - 'test/**'
         - '.github/workflows/Generate Coverage.yml'  # Déclenchement si le workflow change
+        - 'platformio.ini'
 
 jobs:
   coverage:
