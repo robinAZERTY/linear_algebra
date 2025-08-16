@@ -3,7 +3,8 @@ name: Generate Test Coverage Report
 on:
     push:
         paths:
-        - 'lib/linearAlgebra/**'
+        - 'src/**'
+        - 'include/**'
         - 'test/**'
 
 jobs:
