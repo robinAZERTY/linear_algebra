@@ -39,11 +39,13 @@ jobs:
 
       - name: Capture Coverage Data
         run: |
-          # Capturer toute la couverture
-          lcov --capture --directory . --output-file coverage.info
-          # Retirer les fichiers non pertinents (tests, PlatformIO, bibliothèques)
+          # Capture la couverture pour tous les fichiers compilés
+          lcov --capture --directory . --output-file coverage.info --rc lcov_branch_coverage=1 --rc lcov_function_coverage=1
+          
+          # Retirer les fichiers tests et PlatformIO
           lcov --remove coverage.info 'test/*' '*/.pio/*' --output-file coverage_filtered.info
-          # Ne garder que include/ et src/
+          
+          # Forcer l'inclusion de tous les fichiers src et include (même non exécutés)
           lcov --extract coverage_filtered.info "*/include/*" "*/src/*" --output-file coverage_project.info
           # Lister les informations de couverture finales
           lcov --list coverage_project.info
