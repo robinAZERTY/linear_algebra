@@ -146,6 +146,27 @@ void test_expression(void) {
     TEST_ASSERT_EQUAL(3, m1(1,1));
 }
 
+void test_col_col_mult(void) {
+    Matrix<int> m1;
+    colMajorMatrix<int> m2(2, 3);
+    m2.fill(1);
+    m2(0,1) = 2;
+    colMajorMatrix<int> m3(3, 2);
+    m3.fill(1);
+    m3(1,0) = 2;
+
+    m1 = m2*m3;
+    TEST_ASSERT_EQUAL(2, m1.rows());
+    TEST_ASSERT_EQUAL(2, m1.cols());
+    TEST_ASSERT_EQUAL(4, m1.size());
+    TEST_ASSERT_EQUAL(4, m1.capacity());
+    TEST_ASSERT_EQUAL(6, m1(0,0));
+    TEST_ASSERT_EQUAL(4, m1(0,1));
+    TEST_ASSERT_EQUAL(4, m1(1,0));
+    TEST_ASSERT_EQUAL(3, m1(1,1));
+}
+
+
 void setUp() {
     // Initialisation avant chaque test (laisser vide si inutile)
 }
@@ -163,6 +184,7 @@ void setup() {
     RUN_TEST(test_rowMajor);
     RUN_TEST(test_tmp_rowMajor);
     RUN_TEST(test_expression);
+    RUN_TEST(test_col_col_mult);
     UNITY_END();
 }
 
